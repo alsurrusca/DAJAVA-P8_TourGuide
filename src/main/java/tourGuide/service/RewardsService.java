@@ -1,86 +1,55 @@
 package tourGuide.service;
 
-import gpsUtil.GpsUtil;
 import gpsUtil.location.Attraction;
 import gpsUtil.location.Location;
 import gpsUtil.location.VisitedLocation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import rewardCentral.RewardCentral;
-import tourGuide.user.User;
-import tourGuide.user.UserReward;
+import tourGuide.model.User;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
+/**
+ * Rewards Calculation
+ */
 
-@Service
-public class RewardsService {
-    private static final double STATUTE_MILES_PER_NAUTICAL_MILE = 1.15077945;
-    private Logger logger = LoggerFactory.getLogger(TourGuideService.class);
+public interface RewardsService {
 
+    /**
+     * Max distance between location and attraction
+     */
 
-    // proximity in miles
-    private int defaultProximityBuffer = 10;
-    private int proximityBuffer = defaultProximityBuffer;
-    private int attractionProximityRange = 200;
-    private final GpsUtil gpsUtil;
-    private final RewardCentral rewardsCentral;
+     void setProximityBuffer(int proximityBuffer);
 
-    public RewardsService(GpsUtil gpsUtil, RewardCentral rewardCentral) {
-        this.gpsUtil = gpsUtil;
-        this.rewardsCentral = rewardCentral;
-    }
+    /**
+     * Max distance of two location. If they are close enough each other.
+     */
 
-    public void setProximityBuffer(int proximityBuffer) {
-        this.proximityBuffer = proximityBuffer;
-    }
+     void setDefaultProximityBuffer();
 
-    public void setDefaultProximityBuffer() {
-        proximityBuffer = defaultProximityBuffer;
-    }
+    /**
+     * Calculate Rewards for each attraction who are visited.
+     */
+     void calculateRewards(User user);
 
-    public void calculateRewards(User user) {
-        List<VisitedLocation> userLocations = user.getVisitedLocations();
-        List<Attraction> attractions = gpsUtil.getAttractions();
+    /**
+     * True -> user's location proximity with attraction's location
+     *
+     * @param attraction location
+     * @param location   visited
+     * @return true if proximity less than proximity buffer
+     */
+     boolean isWithinAttractionProximity(Attraction attraction, Location location);
 
-        for(VisitedLocation visitedLocation : userLocations) {
-            for(Attraction attraction : attractions) {
-                if(user.getUserRewards().stream().filter(r -> r.attraction.attractionName.equals(attraction.attractionName)).count() == 0) {
-                    if(nearAttraction(visitedLocation, attraction)) {
-                        user.addUserReward(new UserReward(visitedLocation, attraction, getRewardPoints(attraction, user)));
-                    }
-                }
-            }
-        }
-    }
+    /**
+     *
+     * @param attraction -> visited by user
+     * @param user
+     * @return number of rewards
+     */
+     int getRewardPoints(Attraction attraction, User user);
 
-    public boolean isWithinAttractionProximity(Attraction attraction, Location location) {
-        return getDistance(attraction, location) > attractionProximityRange ? false : true;
-    }
-
-    private boolean nearAttraction(VisitedLocation visitedLocation, Attraction attraction) {
-        return getDistance(attraction, visitedLocation.location) > proximityBuffer ? false : true;
-    }
-
-    private int getRewardPoints(Attraction attraction, User user) {
-        return rewardsCentral.getAttractionRewardPoints(attraction.attractionId, user.getUserId());
-    }
-
-    public double getDistance(Location loc1, Location loc2) {
-        double lat1 = Math.toRadians(loc1.latitude);
-        double lon1 = Math.toRadians(loc1.longitude);
-        double lat2 = Math.toRadians(loc2.latitude);
-        double lon2 = Math.toRadians(loc2.longitude);
-
-        double angle = Math.acos(Math.sin(lat1) * Math.sin(lat2)
-                + Math.cos(lat1) * Math.cos(lat2) * Math.cos(lon1 - lon2));
-
-        double nauticalMiles = 60 * Math.toDegrees(angle);
-        double statuteMiles = STATUTE_MILES_PER_NAUTICAL_MILE * nauticalMiles;
-        return statuteMiles;
-    }
-
+    /**
+     * Distance between 2 locations in miles
+     * @param loc1
+     * @param loc2
+     * @return distance in miles
+     */
+     double getDistance(Location loc1, Location loc2);
 }
