@@ -1,11 +1,14 @@
 package tourGuide.model;
 
+import org.javamoney.moneta.Money;
+
 import javax.money.CurrencyUnit;
 import javax.money.Monetary;
 
-import org.javamoney.moneta.Money;
-
-
+/**
+ * UserPreferences is the model entity to store user preferences
+ * Includes detail's of user, price point, duration, number of adults/children
+ */
 public class UserPreferences {
 	
 	private int attractionProximity = Integer.MAX_VALUE;
@@ -76,11 +79,4 @@ public class UserPreferences {
 		this.numberOfChildren = numberOfChildren;
 	}
 
-	public CurrencyUnit getCurrency() {
-		return currency;
-	}
-
-	public void setCurrency(CurrencyUnit currency) {
-		this.currency = currency;
-	}
 }
