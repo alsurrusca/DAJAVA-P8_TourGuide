@@ -2,9 +2,9 @@
 
 TourGuide is a SpringBoot application.
 It's an application that proposes personalized offers to users, but also suggests places to see based on geolocation. Reward points are awarded for visiting tourist attractions. This application was created as part of the java developer training program with Openclassrooms.
-I work on the backend
+I work on the backend 
 
-### Project
+### Project 
 
 * Java
 * Spring Boot
@@ -29,7 +29,7 @@ Download and [install Maven](https://maven.apache.org/install.html).
 
 1. Run application
 2. You can be accessed by default at http://localhost:8080
-3. Available end point
+3. Available end point 
  ```sh
 1. http://localhost:8080/ -> Home page
 2. http://localhost:8080/getLocation?userName=""
