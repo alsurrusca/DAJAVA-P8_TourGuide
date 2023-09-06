@@ -1,23 +1,17 @@
 package tourGuide.service;
 
 import gpsUtil.location.Attraction;
-import gpsUtil.location.Location;
 import gpsUtil.location.VisitedLocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import tourGuide.Entities.UserLocation;
 import tourGuide.constant.TourGuideConstant;
 import tourGuide.model.User;
 import tourGuide.model.UserReward;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @Service
@@ -98,14 +92,7 @@ public class UserService {
         return false;
     }
 
-    public Map<UUID, Location> getAllCurrentLocations() throws ExecutionException, InterruptedException {
-        List<User> users = getAllUser();
-        Map<UUID, Location> currentLocations = new ConcurrentHashMap<>();
-        for (User user : users) {
-            currentLocations.put(user.getUserId(),UserLocation.getUserLocation (user).location);
-        }
-        return currentLocations;
-    }
+
 
 
 }
