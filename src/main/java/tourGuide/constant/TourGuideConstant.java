@@ -11,6 +11,7 @@ public class TourGuideConstant {
     public static final String TRIP_PRICER_API_KEY             = "test-server-api-key";
     public static final long   TRACKING_POLLING_INTERVAL       = TimeUnit.MINUTES.toSeconds(5);
 
+    public static int CAPACITY = 100;
 
 
 }

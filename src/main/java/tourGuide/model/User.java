@@ -29,7 +29,7 @@ public class User {
 		return userId;
 	}
 	
-	public String getUserName() {
+	public String getUsername() {
 		return userName;
 	}
 	
