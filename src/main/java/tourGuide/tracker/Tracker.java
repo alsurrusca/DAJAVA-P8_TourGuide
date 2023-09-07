@@ -1,17 +1,15 @@
 package tourGuide.tracker;
 
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-
 import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import tourGuide.constant.TourGuideConstant;
+import tourGuide.model.User;
 import tourGuide.service.TourGuideService;
 import tourGuide.service.UserService;
-import tourGuide.model.User;
+
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tracker - to track user locations and process any rewards
@@ -47,13 +45,7 @@ public class Tracker extends Thread {
 			List<User> users = userService.getAllUser();
 			logger.debug("Begin Tracker. Tracking " + users.size() + " users.");
 			stopWatch.start();
-			users.parallelStream().forEach(user -> {
-				try {
-					tourGuideService.trackUserLocation(user).get();
-				} catch (InterruptedException | ExecutionException e) {
-					logger.error("Error while tracking user {}", user.getUsername(), e);
-				}
-			});
+			users.parallelStream().forEach(tourGuideService::trackUserLocation);
 			stopWatch.stop();
 			logger.debug("Tracker Time Elapsed: " + TimeUnit.MILLISECONDS.toSeconds(stopWatch.getTime()) + " seconds.");
 			stopWatch.reset();

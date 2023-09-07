@@ -10,6 +10,7 @@ import tourGuide.model.User;
 import tourGuide.model.UserReward;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
@@ -18,10 +19,12 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private Logger log = LoggerFactory.getLogger(UserService.class);
-    private ConcurrentMap<String, User> userByName;
+    private ConcurrentMap<String, User> usersByName;
+
+    private User user;
 
     public UserService() {
-        userByName = new ConcurrentHashMap<String, User>(TourGuideConstant.CAPACITY);
+        usersByName = new ConcurrentHashMap<String, User>(TourGuideConstant.CAPACITY);
     }
 
 
@@ -31,7 +34,7 @@ public class UserService {
      * @return list of all users
      */
     public List<User> getAllUser() {
-        return userByName.values().stream().collect(Collectors.toList());
+        return usersByName.values().stream().collect(Collectors.toList());
     }
 
     /**
@@ -41,8 +44,8 @@ public class UserService {
      * @return boolean true if ok, false if user already exist
      */
     public boolean addUser(User user) {
-        if (!userByName.containsKey(user.getUsername())) {
-            userByName.put(user.getUsername(), user);
+        if (!usersByName.containsKey(user.getUsername())) {
+            usersByName.put(user.getUsername(), user);
             return true;
         }
         return false;
@@ -58,7 +61,7 @@ public class UserService {
      * @return true -> successfully, false -> user not found
      */
     public boolean addUserReward(String username, VisitedLocation visitedLocation, Attraction attraction, int rewardPoints) {
-        User user = getUserByUsername(username);
+        User user = getUsersByUsername(username);
         if (user != null) {
             user.addUserReward(new UserReward(visitedLocation, attraction, rewardPoints));
             return true;
@@ -67,12 +70,18 @@ public class UserService {
         return false;
     }
 
-    public User getUserByUsername(String username) {
-        return userByName.get(username);
+    public User getUsersByUsername(String username) {
+        return usersByName.get(username);
+    }
+
+    public User getUserById(UUID userId){
+        return this.getAllUser().stream().filter(user -> user.getUserId() == userId)
+                .findAny()
+                .orElse(null);
     }
 
     public int getUserCount() {
-        return userByName.size();
+        return usersByName.size();
     }
 
     /**
@@ -83,7 +92,7 @@ public class UserService {
      * @return true if successfully, false if user not found
      */
     public boolean addToVisitedLocation(VisitedLocation visitedLocation, String username) {
-        User user = userByName.get(username);
+        User user = usersByName.get(username);
         if (user != null) {
             user.addToVisitedLocations(visitedLocation);
             return true;
@@ -91,7 +100,6 @@ public class UserService {
         log.debug("addToVisitedLocations : user " + username + "was not found");
         return false;
     }
-
 
 
 
