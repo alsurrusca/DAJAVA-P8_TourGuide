@@ -7,7 +7,7 @@ import gpsUtil.location.VisitedLocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import tourGuide.helper.InternalTestHelper;
+import tourGuide.constant.InternalTestService;
 import tourGuide.model.User;
 import tourGuide.model.UserReward;
 import tripPricer.Provider;
@@ -28,11 +28,14 @@ public class TourGuideService {
     private final TripPricer tripPricer = new TripPricer();
     private final RewardsService rewardsService;
     public UserService userService;
-    private TripService tripService;
     private final ExecutorService executorService = Executors.newFixedThreadPool(100);
     private Logger logger = LoggerFactory.getLogger(TourGuideService.class);
 
     public TrackerService tracker;
+    public InternalTestService internalTestService;
+    boolean testMode = true;
+
+
 
 
     public TourGuideService(GpsUtil gpsUtil, GpsUtil gpsUtil1, RewardsService rewardsService, UserService userService) {
@@ -40,6 +43,30 @@ public class TourGuideService {
         this.rewardsService = rewardsService;
         this.userService = userService;
         this.tracker = new TrackerService(TourGuideService.this, userService);
+
+        this.internalTestService = new InternalTestService();
+
+        if(testMode) {
+            logger.info("TestMode enabled");
+            logger.debug("Initializing users");
+            internalTestService.initializeInternalUsers();
+            logger.debug("Finished initializing users");
+        }
+    }
+
+    public TourGuideService(GpsUtil gpsUtil, RewardsService rewardsService) {
+        this.gpsUtil = gpsUtil;
+        this.rewardsService = rewardsService;
+        this.tracker = new TrackerService(TourGuideService.this, userService);
+        this.internalTestService = new InternalTestService();
+
+        if(testMode) {
+            logger.info("TestMode enabled");
+            logger.debug("Initializing users");
+            internalTestService.initializeInternalUsers();
+            logger.debug("Finished initializing users");
+        }
+
     }
 
 
@@ -67,11 +94,12 @@ public class TourGuideService {
         while (providers.size()<10){
             List<Provider> providerList =  tripPricer.getPrice(tripPricerApiKey, user.getUserId(), user.getUserPreferences().getNumberOfAdults(),
                     user.getUserPreferences().getNumberOfChildren(), user.getUserPreferences().getTripDuration(), cumulativeRewardPoints);
-           providers.addAll(providerList);
+            providers.addAll(providerList);
         }
         user.setTripDeals(providers);
         return providers;
     }
+
 
     public List<Attraction> getNearByAttractions(VisitedLocation visitedLocation) {
 
@@ -107,9 +135,12 @@ public class TourGuideService {
         userService.addUser(user);
     }
 
-    public List<User> getAllUsers() {
-        return userService.getAllUser();
-    }
+
+
+
+public List<User> getAllUsers() {
+    return userService.getAllUser();
+}
 
     /**********************************************************************************
      *
@@ -119,19 +150,6 @@ public class TourGuideService {
     public static final String tripPricerApiKey = "test-server-api-key";
     // Database connection will be used for external users, but for testing purposes internal users are provided and stored in memory
     private final Map<String, User> internalUserMap = new HashMap<>();
-
-    private void initializeInternalUsers() {
-        IntStream.range(0, InternalTestHelper.getInternalUserNumber()).forEach(i -> {
-            String userName = "internalUser" + i;
-            String phone = "000";
-            String email = userName + "@tourGuide.com";
-            User user = new User(UUID.randomUUID(), userName, phone, email);
-            generateUserLocationHistory(user);
-
-            internalUserMap.put(userName, user);
-        });
-        logger.debug("Created " + InternalTestHelper.getInternalUserNumber() + " internal test users.");
-    }
 
     private void generateUserLocationHistory(User user) {
         IntStream.range(0, 3).forEach(i -> {

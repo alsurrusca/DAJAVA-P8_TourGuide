@@ -5,13 +5,13 @@ import gpsUtil.location.VisitedLocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import tourGuide.DTO.UserPreferencesDTO;
 import tourGuide.model.User;
+import tourGuide.model.UserPreferences;
 import tourGuide.service.TourGuideService;
+import tourGuide.service.UserPreferencesService;
 import tourGuide.service.UserService;
 import tripPricer.Provider;
 
@@ -27,6 +27,9 @@ public class TourGuideController {
     @Autowired
     UserService userService;
 
+    @Autowired
+    UserPreferencesService userPreferencesService;
+
     Logger log = LoggerFactory.getLogger(TourGuideController.class);
 
     @RequestMapping("/")
@@ -35,7 +38,7 @@ public class TourGuideController {
     }
 
     @RequestMapping("/getLocation")
-    public String getLocation(@RequestParam String userName) throws ExecutionException, InterruptedException {
+    public String getLocation(@RequestParam String userName)  {
         VisitedLocation visitedLocation = tourGuideService.getUserLocation(getUser(userName).getUserId());
         return JsonStream.serialize(visitedLocation.location);
     }
@@ -52,12 +55,11 @@ public class TourGuideController {
     @RequestMapping("/getNearbyAttractions")
     public String getNearbyAttractions(@RequestParam String userName) throws ExecutionException, InterruptedException {
         VisitedLocation visitedLocation = tourGuideService.getUserLocation(getUser(userName).getUserId());
-        if(visitedLocation == null){
+        if (visitedLocation == null) {
             return JsonStream.serialize("User" + userName + "not found");
         }
         return JsonStream.serialize(tourGuideService.getNearByAttractions(visitedLocation));
     }
-
 
 
     @RequestMapping("/getRewards")
@@ -87,32 +89,27 @@ public class TourGuideController {
         return JsonStream.serialize(providers);
     }
 
+
+
+    /**
+     * Update user's preferences
+     * @param username
+     * @param userPreferencesDTO
+     * @return responseEntity
+     */
+    @PutMapping("/updateUserPreferences}")
+    public ResponseEntity<UserPreferences> updateUserPreferences
+            (@RequestParam String username, @RequestBody UserPreferencesDTO userPreferencesDTO) {
+        UserPreferences userPreferences = userPreferencesService.userUpdatePreferences(username, userPreferencesDTO);
+        return ResponseEntity.ok(userPreferences);
+
+    }
+
     private User getUser(String userName) {
         return userService.getUsersByUsername(userName);
 
     }
-
-    @GetMapping("/update")
-    public String showUpdateForm(@RequestParam String username, Model model) {
-        User user = userService.getUsersByUsername(username);
-        log.info("Find user by username SUCCESS");
-        model.addAttribute("patient", user);
-        return "update";
-    }
-  /**
-    @PutMapping("/update}")
-    public String updateUser(@RequestParam String username, User user,
-                             BindingResult result) {
-        if (!result.hasErrors()) {
-            log.error("Update user FAILED");
-            return "update";
-        }
-
-        userService.validate(user, result);
-        log.info("Update User SUCCESS");
-        return "update";
- */
-    }
+}
 
 
    
