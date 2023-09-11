@@ -5,12 +5,12 @@ import gpsUtil.location.VisitedLocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import tourGuide.constant.InternalTestService;
 import tourGuide.constant.TourGuideConstant;
 import tourGuide.model.User;
 import tourGuide.model.UserReward;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
@@ -20,11 +20,23 @@ public class UserService {
 
     private Logger log = LoggerFactory.getLogger(UserService.class);
     private ConcurrentMap<String, User> usersByName;
+    public InternalTestService internalTestService;
+    boolean testMode = true;
 
     private User user;
+    private Logger logger = LoggerFactory.getLogger(TourGuideService.class);
 
     public UserService() {
         usersByName = new ConcurrentHashMap<String, User>(TourGuideConstant.CAPACITY);
+        this.internalTestService = new InternalTestService();
+
+        if(testMode) {
+            logger.info("TestMode enabled");
+            logger.debug("Initializing users");
+            internalTestService.initializeInternalUsers();
+            logger.debug("Finished initializing users");
+        }
+
     }
 
 
@@ -34,6 +46,9 @@ public class UserService {
      * @return list of all users
      */
     public List<User> getAllUser() {
+        log.info("get All user ok");
+        //return new ArrayList<>(internalTestService.internalUserMap.values());
+
         return usersByName.values().stream().collect(Collectors.toList());
     }
 
@@ -43,12 +58,10 @@ public class UserService {
      * @param user - User object to be added
      * @return boolean true if ok, false if user already exist
      */
-    public boolean addUser(User user) {
-        if (!usersByName.containsKey(user.getUsername())) {
-            usersByName.put(user.getUsername(), user);
-            return true;
-        }
-        return false;
+    public User addUser(User user) {
+        log.info("Add user ok");
+
+        return usersByName.put(user.getUsername(),user);
     }
 
     /**
@@ -60,29 +73,21 @@ public class UserService {
      * @param rewardPoints
      * @return true -> successfully, false -> user not found
      */
-    public boolean addUserReward(String username, VisitedLocation visitedLocation, Attraction attraction, int rewardPoints) {
-        User user = getUsersByUsername(username);
+    public void addUserReward(User username, VisitedLocation visitedLocation, Attraction attraction, int rewardPoints) {
+        User user = getUsersByUsername(username.getUsername());
         if (user != null) {
             user.addUserReward(new UserReward(visitedLocation, attraction, rewardPoints));
-            return true;
+        } else {
+            throw new IllegalArgumentException("UserService - UserReward - User with username " + username + " not found");
         }
-        log.debug("addUserReward : username " + username + "not found");
-        return false;
     }
+
 
     public User getUsersByUsername(String username) {
         return usersByName.get(username);
     }
 
-    public User getUserById(UUID userId){
-        return this.getAllUser().stream().filter(user -> user.getUserId() == userId)
-                .findAny()
-                .orElse(null);
-    }
 
-    public int getUserCount() {
-        return usersByName.size();
-    }
 
     /**
      * Add a VisitedLocation to a stored User
@@ -100,7 +105,5 @@ public class UserService {
         log.debug("addToVisitedLocations : user " + username + "was not found");
         return false;
     }
-
-
 
 }

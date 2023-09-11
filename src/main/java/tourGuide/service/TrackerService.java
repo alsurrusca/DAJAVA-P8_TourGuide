@@ -25,6 +25,8 @@ public class TrackerService {
         executorService.submit(tracker);
         addShutDownHook();
     }
+
+
     /**
      * Assures to shut down the Tracker thread
      */
