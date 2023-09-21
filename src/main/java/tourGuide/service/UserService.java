@@ -1,39 +1,43 @@
 package tourGuide.service;
 
-import gpsUtil.location.Attraction;
+import gpsUtil.GpsUtil;
 import gpsUtil.location.VisitedLocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import tourGuide.constant.InternalTestService;
+import tourGuide.constant.InternalTest;
 import tourGuide.constant.TourGuideConstant;
 import tourGuide.model.User;
-import tourGuide.model.UserReward;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
+import java.util.concurrent.*;
 
 @Service
 public class UserService {
 
-    private Logger log = LoggerFactory.getLogger(UserService.class);
-    private ConcurrentMap<String, User> usersByName;
-    public InternalTestService internalTestService;
+    private final Logger log = LoggerFactory.getLogger(UserService.class);
+    private final ConcurrentMap<String, User> usersByName;
+    public InternalTest internalTest;
     boolean testMode = true;
+    @Autowired
+    private GpsUtil gpsUtil;
+    @Autowired
+    private RewardsService rewardsService;
 
-    private User user;
-    private Logger logger = LoggerFactory.getLogger(TourGuideService.class);
+    private final ExecutorService executorService = Executors.newFixedThreadPool(100);
+
+    private final Logger logger = LoggerFactory.getLogger(TourGuideService.class);
 
     public UserService() {
-        usersByName = new ConcurrentHashMap<String, User>(TourGuideConstant.CAPACITY);
-        this.internalTestService = new InternalTestService();
+        usersByName = new ConcurrentHashMap<>(TourGuideConstant.CAPACITY);
+        this.internalTest = new InternalTest();
 
-        if(testMode) {
+        if (testMode) {
             logger.info("TestMode enabled");
             logger.debug("Initializing users");
-            internalTestService.initializeInternalUsers();
+            internalTest.initializeInternalUsers();
             logger.debug("Finished initializing users");
         }
 
@@ -47,63 +51,55 @@ public class UserService {
      */
     public List<User> getAllUser() {
         log.info("get All user ok");
-        //return new ArrayList<>(internalTestService.internalUserMap.values());
-
-        return usersByName.values().stream().collect(Collectors.toList());
+        return new ArrayList<>(usersByName.values());
     }
 
     /**
      * Add user to the collection
      *
      * @param user - User object to be added
-     * @return boolean true if ok, false if user already exist
      */
-    public User addUser(User user) {
+    public void addUser(User user) {
         log.info("Add user ok");
 
-        return usersByName.put(user.getUsername(),user);
+        usersByName.put(user.getUsername(), user);
     }
-
-    /**
-     * Generate and add UserReward
-     *
-     * @param username
-     * @param visitedLocation
-     * @param attraction
-     * @param rewardPoints
-     * @return true -> successfully, false -> user not found
-     */
-    public void addUserReward(User username, VisitedLocation visitedLocation, Attraction attraction, int rewardPoints) {
-        User user = getUsersByUsername(username.getUsername());
-        if (user != null) {
-            user.addUserReward(new UserReward(visitedLocation, attraction, rewardPoints));
-        } else {
-            throw new IllegalArgumentException("UserService - UserReward - User with username " + username + " not found");
-        }
-    }
-
 
     public User getUsersByUsername(String username) {
         return usersByName.get(username);
     }
 
+    public CompletableFuture<VisitedLocation> trackUserLocation(User user) {
+        ExecutorService executorService = Executors.newCachedThreadPool();
 
-
-    /**
-     * Add a VisitedLocation to a stored User
-     *
-     * @param visitedLocation - To be added to user
-     * @param username
-     * @return true if successfully, false if user not found
-     */
-    public boolean addToVisitedLocation(VisitedLocation visitedLocation, String username) {
-        User user = usersByName.get(username);
-        if (user != null) {
+        CompletableFuture<VisitedLocation> result = CompletableFuture.supplyAsync(() -> {
+            VisitedLocation visitedLocation = gpsUtil.getUserLocation(user.getUserId());
             user.addToVisitedLocations(visitedLocation);
-            return true;
-        }
-        log.debug("addToVisitedLocations : user " + username + "was not found");
-        return false;
+            rewardsService.calculateRewards(user);
+            return visitedLocation;
+        }, executorService);
+        executorService.shutdownNow();
+        return result;
     }
 
+    public VisitedLocation getUserVisitedLocation(User user) throws ExecutionException, InterruptedException {
+        if (user.getVisitedLocations() != null) {
+            CompletableFuture<VisitedLocation> resultFuture = trackUserLocation(user);
+
+            VisitedLocation result = resultFuture.get();
+            assert result != null;
+            return (!user.getVisitedLocations().isEmpty()) ?
+                    user.getLastVisitedLocation() : result;
+        } else {
+            logger.error("User with username : " + user.getUsername() + " not find ! ");
+            return null;
+        }
+    }
+
+    public void trackListUserLocation(List<User> userList) {
+        for (User user : userList) {
+            Runnable runnable = () -> trackUserLocation(user);
+            executorService.execute(runnable);
+        }
+    }
 }

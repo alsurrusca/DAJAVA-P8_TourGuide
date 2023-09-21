@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import tourGuide.DTO.UserPreferencesDTO;
+import tourGuide.constant.InternalTest;
+import tourGuide.exception.UsernameNotFoundException;
 import tourGuide.model.User;
 import tourGuide.model.UserPreferences;
 import tourGuide.service.TourGuideService;
@@ -30,6 +32,9 @@ public class TourGuideController {
     @Autowired
     UserPreferencesService userPreferencesService;
 
+    @Autowired
+    InternalTest internalTest;
+
     Logger log = LoggerFactory.getLogger(TourGuideController.class);
 
     @RequestMapping("/")
@@ -37,64 +42,96 @@ public class TourGuideController {
         return "Greetings from TourGuide !";
     }
 
+    /**
+     * Get user location with username
+     * @param username - Username of user
+     * @return a Json String of a user location
+     *
+     */
     @RequestMapping("/getLocation")
-    public String getLocation(@RequestParam String userName)  {
-        VisitedLocation visitedLocation = tourGuideService.getUserLocation(getUser(userName).getUserId());
-        return JsonStream.serialize(visitedLocation.location);
+    public String getLocation(@RequestParam String username){
+       try{
+           VisitedLocation visitedLocation = tourGuideService.getUserVisitedLocation(getUser(username));
+           return JsonStream.serialize(visitedLocation.location);
+       } catch (ExecutionException | InterruptedException e) {
+           return ("TourGuide Controller : Error with completable Future : " + e);
+       } catch (UsernameNotFoundException e){
+           return "Username not found  : " + e.getMessage();
+       }
     }
 
-    //  TODO: Change this method to no longer return a List of Attractions.
-    //  Instead: Get the closest five tourist attractions to the user - no matter how far away they are.
-    //  Return a new JSON object that contains:
-    // Name of Tourist attraction,
-    // Tourist attractions lat/long,
-    // The user's location lat/long,
-    // The distance in miles between the user's location and each of the attractions.
-    // The reward points for visiting each Attraction.
-    //    Note: Attraction reward points can be gathered from RewardsCentral
+    /**
+     * Get Nearby attraction
+     * @param username - Username of user
+     * @return Json Stream
+     */
     @RequestMapping("/getNearbyAttractions")
-    public String getNearbyAttractions(@RequestParam String userName) throws ExecutionException, InterruptedException {
-        VisitedLocation visitedLocation = tourGuideService.getUserLocation(getUser(userName).getUserId());
-        if (visitedLocation == null) {
-            return JsonStream.serialize("User" + userName + "not found");
+    public String getNearbyAttractions(@RequestParam String username) {
+        try {
+            if (!internalTest.checkIfUserNameExists(username)) {
+                log.error(("This username doesn't exist : " + username));
+                throw new UsernameNotFoundException(username);
+            }
+            VisitedLocation visitedLocation = tourGuideService.getUserVisitedLocation(getUser(username));
+            return JsonStream.serialize(tourGuideService.getNearByAttractions(visitedLocation));
+        } catch (UsernameNotFoundException e) {
+            return "Username not found : " + e.getMessage();
+        } catch (ArithmeticException e) {
+            return ("Unable to get location of : " + username);
+        } catch (ExecutionException | InterruptedException e) {
+            return ("TourGuide Controller : Error with completable Future : " + e);
         }
-        return JsonStream.serialize(tourGuideService.getNearByAttractions(visitedLocation));
     }
 
 
     @RequestMapping("/getRewards")
-    public String getRewards(@RequestParam String userName) {
-        return JsonStream.serialize(tourGuideService.getUserRewards(getUser(userName)));
+    public String getRewards(@RequestParam String username) {
+        try {
+            if (!internalTest.checkIfUserNameExists(username)) {
+                log.error("This username doesn't exist " + username);
+                throw new UsernameNotFoundException(username);
+            }
+            return JsonStream.serialize(tourGuideService.getUserRewards(getUser(username)));
+        } catch (UsernameNotFoundException e) {
+            log.error("TourGuide Controller : An error occured : " + e.getMessage(), e);
+            return "An error occurred:" + e.getMessage();
+        }
     }
 
-    // TODO: Get a list of every user's most recent location as JSON
-    //- Note: does not use gpsUtil to query for their current location,
-    //        but rather gathers the user's current location from their stored location history.
-    //
-    // Return object should be the just a JSON mapping of userId to Locations similar to:
-    //     {
-    //        "019b04a9-067a-4c76-8817-ee75088c3822": {"longitude":-48.188821,"latitude":74.84371}
-    //        ...
-    //     }
-
     @RequestMapping("/getAllCurrentLocations")
-    public String getAllCurrentLocations() throws ExecutionException, InterruptedException {
-
-        return JsonStream.serialize(tourGuideService.getAllCurrentLocations());
+    public String getAllCurrentLocations() {
+            try {
+                return JsonStream.serialize(tourGuideService.getAllCurrentLocations());
+            } catch (ExecutionException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
     }
 
     @RequestMapping("/getTripDeals")
     public String getTripDeals(@RequestParam String username) {
-        List<Provider> providers = tourGuideService.getTripDeals(userService.getUsersByUsername(username));
-        return JsonStream.serialize(providers);
+        try {
+            if (!internalTest.checkIfUserNameExists(username)) {
+                log.error("This username doesn't exist: " + username);
+                throw new UsernameNotFoundException(username);
+            }
+
+            List<Provider> providers = tourGuideService.getTripDeals(userService.getUsersByUsername(username));
+            return JsonStream.serialize(providers);
+        } catch (UsernameNotFoundException e) {
+            return "Username not found: " + e.getMessage();
+        } catch (Exception e) {
+            log.error("An error occurred: " + e.getMessage(), e);
+            return "An error occurred: " + e.getMessage();
+        }
     }
+
 
 
 
     /**
      * Update user's preferences
-     * @param username
-     * @param userPreferencesDTO
+     * @param username - Username of user
+     * @param userPreferencesDTO - DTO of user's preferences
      * @return responseEntity
      */
     @PutMapping("/updateUserPreferences}")

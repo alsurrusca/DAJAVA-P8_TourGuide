@@ -7,171 +7,131 @@ import gpsUtil.location.VisitedLocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import tourGuide.constant.InternalTestService;
+import tourGuide.constant.InternalTest;
 import tourGuide.model.User;
 import tourGuide.model.UserReward;
+import tourGuide.tracker.Tracker;
 import tripPricer.Provider;
-import tripPricer.TripPricer;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.stream.IntStream;
 
 @Service
 public class TourGuideService {
     private final GpsUtil gpsUtil;
-    private final TripPricer tripPricer = new TripPricer();
-    private final RewardsService rewardsService;
-    public UserService userService;
-    private final ExecutorService executorService = Executors.newFixedThreadPool(100);
-    private Logger logger = LoggerFactory.getLogger(TourGuideService.class);
 
-    public TrackerService tracker;
-    public InternalTestService internalTestService;
+    private final RewardsService rewardsService;
+
+    public UserService userService;
+
+    public UserRewardService userRewardService;
+
+    private final Logger logger = LoggerFactory.getLogger(TourGuideService.class);
+
+    public Tracker tracker;
+    public InternalTest internalTest;
     boolean testMode = true;
 
 
-
-
-    public TourGuideService(GpsUtil gpsUtil, GpsUtil gpsUtil1, RewardsService rewardsService, UserService userService) {
+    public TourGuideService(GpsUtil gpsUtil1, RewardsService rewardsService, UserService userService) {
         this.gpsUtil = gpsUtil1;
         this.rewardsService = rewardsService;
         this.userService = userService;
-        this.tracker = new TrackerService(TourGuideService.this, userService);
+        this.tracker = new Tracker(TourGuideService.this, userService);
 
-        this.internalTestService = new InternalTestService();
+        this.internalTest = new InternalTest();
 
-        if(testMode) {
+        if (testMode) {
             logger.info("TestMode enabled");
             logger.debug("Initializing users");
-            internalTestService.initializeInternalUsers();
-            logger.debug("Finished initializing users");
-        }
-    }
-
-    public TourGuideService(GpsUtil gpsUtil, RewardsService rewardsService) {
-        this.gpsUtil = gpsUtil;
-        this.rewardsService = rewardsService;
-        this.tracker = new TrackerService(TourGuideService.this, userService);
-        this.internalTestService = new InternalTestService();
-
-        if(testMode) {
-            logger.info("TestMode enabled");
-            logger.debug("Initializing users");
-            internalTestService.initializeInternalUsers();
+            internalTest.initializeInternalUsers();
             logger.debug("Finished initializing users");
         }
 
+        tracker.startTracking();
+
+        addShutDownHook();
     }
 
 
-    public List<UserReward> getUserRewards(User user) {
-        return user.getUserRewards();
-    }
 
-
-    public VisitedLocation getUserLocation(UUID userId) {
-        return gpsUtil.getUserLocation(userId);
-    }
-
-
-    public VisitedLocation trackUserLocation(User user) {
-        VisitedLocation visitedLocation = new VisitedLocation(user.getUserId(), new Location(generateRandomLatitude(), generateRandomLongitude()), getRandomTime());
-        user.getVisitedLocations().add(visitedLocation);
-        rewardsService.calculateRewards(user);
-        return new VisitedLocation(user.getUserId(), new Location(generateRandomLatitude(), generateRandomLongitude()), getRandomTime());
-    }
-
-
-    public List<Provider> getTripDeals(User user) {
-        int cumulativeRewardPoints = user.getUserRewards().stream().mapToInt(UserReward::getRewardPoints).sum();
-        List<Provider> providers = new ArrayList<>();
-        while (providers.size()<10){
-            List<Provider> providerList =  tripPricer.getPrice(tripPricerApiKey, user.getUserId(), user.getUserPreferences().getNumberOfAdults(),
-                    user.getUserPreferences().getNumberOfChildren(), user.getUserPreferences().getTripDuration(), cumulativeRewardPoints);
-            providers.addAll(providerList);
-        }
-        user.setTripDeals(providers);
-        return providers;
-    }
-
-
-    public List<Attraction> getNearByAttractions(VisitedLocation visitedLocation) {
-
-        Map<Double, Attraction> attractionMap = new HashMap<>();
-         gpsUtil.getAttractions().forEach((n) -> {
-             attractionMap.put(getDistance(n,visitedLocation.location), n);
-         });
-
-         TreeMap<Double, Attraction> sortedAttraction = new TreeMap<>(attractionMap);
-         return new ArrayList<>(sortedAttraction.values()).subList(0,5);
-
-         }
-
-
-
-
-
-    public double getDistance(Location locationA, Location locationB) {
-        return Math.sqrt((locationB.longitude - locationA.longitude) * (locationB.longitude - locationA.longitude) + (locationB.latitude - locationA.latitude) * (locationB.latitude - locationA.latitude));
-
-    }
-
-    public Map<UUID, Location> getAllCurrentLocations() throws ExecutionException, InterruptedException {
-        List<User> users = userService.getAllUser();
-        Map<UUID, Location> currentLocations = new ConcurrentHashMap<>();
-        for (User user : users) {
-            currentLocations.put(user.getUserId(), getUserLocation(user.getUserId()).location);
-        }
-        return currentLocations;
+    /**
+     * Get All users
+     *
+     * @return a list of all user
+     */
+    public List<User> getAllUsers() {
+        return userService.getAllUser();
     }
 
     public void addUser(User user) {
         userService.addUser(user);
     }
 
+    public List<Provider> getTripDeals(User user) {
+        return userRewardService.getTripDeals(user);
+    }
+
+    public List<UserReward> getUserRewards(User user) {
+        return userRewardService.getUserRewards(user);
+    }
+
+    public VisitedLocation getUserVisitedLocation(User user) throws ExecutionException, InterruptedException {
+        return userService.getUserVisitedLocation(user);
+    }
+
+    public CompletableFuture<VisitedLocation> trackUserLocation(User user) {
+        return userService.trackUserLocation(user);
+    }
+
+    public Map<String, Location> getAllCurrentLocations() throws ExecutionException, InterruptedException {
+
+        Map<String, Location> userLocation = new HashMap<>();
+        List<User> userList = userService.getAllUser();
+        if (!userList.isEmpty()) {
+            for (User user : userList) {
+                if (!user.getVisitedLocations().isEmpty())
+                    if (user.getLastVisitedLocation().location != null)
+                        userLocation.put(user.getUserId().toString(), user.getLastVisitedLocation().location);
+            }
+            return userLocation;
+        } else {
+            logger.error("TourGuideService : There no users ! ");
+            return null;
+        }
+    }
 
 
+    public List<Attraction> getNearByAttractions(VisitedLocation visitedLocation) {
 
-public List<User> getAllUsers() {
-    return userService.getAllUser();
-}
+        Map<Double, Attraction> attractionMap = new HashMap<>();
+        gpsUtil.getAttractions().forEach((n) -> attractionMap.put(getDistance(n, visitedLocation.location), n));
 
-    /**********************************************************************************
+        TreeMap<Double, Attraction> sortedAttraction = new TreeMap<>(attractionMap);
+        return new ArrayList<>(sortedAttraction.values()).subList(0, 5);
+
+    }
+
+
+    /**
+     * Create an ExecutorService thread pool in which runnable of trackUserLocation is executed
      *
-     * Methods Below: For Internal Testing
-     *
-     **********************************************************************************/
-    public static final String tripPricerApiKey = "test-server-api-key";
-    // Database connection will be used for external users, but for testing purposes internal users are provided and stored in memory
-    private final Map<String, User> internalUserMap = new HashMap<>();
-
-    private void generateUserLocationHistory(User user) {
-        IntStream.range(0, 3).forEach(i -> {
-            user.addToVisitedLocations(new VisitedLocation(user.getUserId(), new Location(generateRandomLatitude(), generateRandomLongitude()), getRandomTime()));
-        });
+     * @param userList the list containing all users
+     */
+    public void trackListUserLocation(List<User> userList) throws InterruptedException {
+        userService.trackListUserLocation(userList);
     }
 
-    private double generateRandomLongitude() {
-        double leftLimit = -180;
-        double rightLimit = 180;
-        return leftLimit + new Random().nextDouble() * (rightLimit - leftLimit);
+
+    private void addShutDownHook() {
+        Runtime.getRuntime().addShutdownHook(new Thread(tracker::stopTracking));
     }
 
-    private double generateRandomLatitude() {
-        double leftLimit = -85.05112878;
-        double rightLimit = 85.05112878;
-        return leftLimit + new Random().nextDouble() * (rightLimit - leftLimit);
+    public double getDistance(Location locationA, Location locationB) {
+        return rewardsService.getDistance(locationA, locationB);
+
     }
 
-    private Date getRandomTime() {
-        LocalDateTime localDateTime = LocalDateTime.now().minusDays(new Random().nextInt(30));
-        return Date.from(localDateTime.toInstant(ZoneOffset.UTC));
-    }
 
 }

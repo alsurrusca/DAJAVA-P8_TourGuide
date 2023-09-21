@@ -15,8 +15,8 @@ import java.util.*;
 import static java.util.stream.IntStream.range;
 
 @Service
-public class InternalTestService {
-    private final Logger log = LoggerFactory.getLogger(InternalTestService.class);
+public class InternalTest {
+    private final Logger log = LoggerFactory.getLogger(InternalTest.class);
 
     /**********************************************************************************
      * Methods Below: For Internal Testing
@@ -87,6 +87,16 @@ public class InternalTestService {
     public Date getRandomTime() {
         LocalDateTime localDateTime = LocalDateTime.now().minusDays(new Random().nextInt(30));
         return Date.from(localDateTime.toInstant(ZoneOffset.UTC));
+    }
+
+    /**
+     * Check if the InternalUserMap contains already the userName
+     *
+     * @param userName the string of the username
+     * @return true if it's ok
+     */
+    public boolean checkIfUserNameExists(String userName) {
+        return internalUserMap.containsKey(userName) ? true : false;
     }
 
 
