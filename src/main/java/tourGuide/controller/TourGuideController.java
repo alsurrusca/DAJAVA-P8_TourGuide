@@ -51,7 +51,7 @@ public class TourGuideController {
     @RequestMapping("/getLocation")
     public String getLocation(@RequestParam String username){
        try{
-           VisitedLocation visitedLocation = tourGuideService.getUserVisitedLocation(getUser(username));
+           VisitedLocation visitedLocation = tourGuideService.getUserLocation(getUser(username));
            return JsonStream.serialize(visitedLocation.location);
        } catch (ExecutionException | InterruptedException e) {
            return ("TourGuide Controller : Error with completable Future : " + e);
@@ -72,7 +72,7 @@ public class TourGuideController {
                 log.error(("This username doesn't exist : " + username));
                 throw new UsernameNotFoundException(username);
             }
-            VisitedLocation visitedLocation = tourGuideService.getUserVisitedLocation(getUser(username));
+            VisitedLocation visitedLocation = tourGuideService.getUserLocation(getUser(username));
             return JsonStream.serialize(tourGuideService.getNearByAttractions(visitedLocation));
         } catch (UsernameNotFoundException e) {
             return "Username not found : " + e.getMessage();
@@ -137,7 +137,7 @@ public class TourGuideController {
     @PutMapping("/updateUserPreferences}")
     public ResponseEntity<UserPreferences> updateUserPreferences
             (@RequestParam String username, @RequestBody UserPreferencesDTO userPreferencesDTO) {
-        UserPreferences userPreferences = userPreferencesService.userUpdatePreferences(username, userPreferencesDTO);
+        UserPreferences userPreferences = userPreferencesService.updateUserPreferences(username, userPreferencesDTO);
         return ResponseEntity.ok(userPreferences);
 
     }

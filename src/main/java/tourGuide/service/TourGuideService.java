@@ -34,7 +34,7 @@ public class TourGuideService {
     boolean testMode = true;
 
 
-    public TourGuideService(GpsUtil gpsUtil1, RewardsService rewardsService, UserService userService) {
+    public TourGuideService(GpsUtil gpsUtil, GpsUtil gpsUtil1, RewardsService rewardsService, UserService userService) {
         this.gpsUtil = gpsUtil1;
         this.rewardsService = rewardsService;
         this.userService = userService;
@@ -77,8 +77,8 @@ public class TourGuideService {
         return userRewardService.getUserRewards(user);
     }
 
-    public VisitedLocation getUserVisitedLocation(User user) throws ExecutionException, InterruptedException {
-        return userService.getUserVisitedLocation(user);
+    public VisitedLocation getUserLocation(User user) throws ExecutionException, InterruptedException {
+        return userService.getUserLocation(user);
     }
 
     public CompletableFuture<VisitedLocation> trackUserLocation(User user) {
@@ -123,15 +123,16 @@ public class TourGuideService {
         userService.trackListUserLocation(userList);
     }
 
+    public double getDistance(Location locationA, Location locationB) {
+        return Math.sqrt((locationB.longitude - locationA.longitude) * (locationB.longitude - locationA.longitude) + (locationB.latitude - locationA.latitude) * (locationB.latitude - locationA.latitude));
+
+    }
 
     private void addShutDownHook() {
         Runtime.getRuntime().addShutdownHook(new Thread(tracker::stopTracking));
     }
 
-    public double getDistance(Location locationA, Location locationB) {
-        return rewardsService.getDistance(locationA, locationB);
 
-    }
 
 
 }

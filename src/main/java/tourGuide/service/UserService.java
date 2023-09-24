@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import rewardCentral.RewardCentral;
 import tourGuide.constant.InternalTest;
 import tourGuide.constant.TourGuideConstant;
 import tourGuide.model.User;
@@ -33,6 +34,8 @@ public class UserService {
     public UserService() {
         usersByName = new ConcurrentHashMap<>(TourGuideConstant.CAPACITY);
         this.internalTest = new InternalTest();
+        this.gpsUtil = new GpsUtil();
+        this.rewardsService = new RewardsService(gpsUtil,new RewardCentral());
 
         if (testMode) {
             logger.info("TestMode enabled");
@@ -60,9 +63,8 @@ public class UserService {
      * @param user - User object to be added
      */
     public void addUser(User user) {
-        log.info("Add user ok");
-
         usersByName.put(user.getUsername(), user);
+        log.info("Add user ok");
     }
 
     public User getUsersByUsername(String username) {
@@ -82,19 +84,19 @@ public class UserService {
         return result;
     }
 
-    public VisitedLocation getUserVisitedLocation(User user) throws ExecutionException, InterruptedException {
-        if (user.getVisitedLocations() != null) {
-            CompletableFuture<VisitedLocation> resultFuture = trackUserLocation(user);
+    public VisitedLocation getUserLocation(User user) throws ExecutionException, InterruptedException {
+        CompletableFuture<VisitedLocation> resultFuture = trackUserLocation(user);
 
-            VisitedLocation result = resultFuture.get();
-            assert result != null;
-            return (!user.getVisitedLocations().isEmpty()) ?
-                    user.getLastVisitedLocation() : result;
-        } else {
-            logger.error("User with username : " + user.getUsername() + " not find ! ");
-            return null;
-        }
+        VisitedLocation result = resultFuture.get();
+        assert result != null;
+
+        return (!user.getVisitedLocations().isEmpty()) ?
+                user.getLastVisitedLocation() :
+                result;
+
     }
+
+
 
     public void trackListUserLocation(List<User> userList) {
         for (User user : userList) {

@@ -13,7 +13,7 @@ public class UserPreferencesService {
     private UserService userService;
 
 
-    public UserPreferences userUpdatePreferences (String username, UserPreferencesDTO userPreferencesDTO ) {
+    public UserPreferences updateUserPreferences(String username, UserPreferencesDTO userPreferencesDTO ) {
         User user = userService.getUsersByUsername(username);
         user.setUserPreferences(new UserPreferences(userPreferencesDTO));
         return user.getUserPreferences();
