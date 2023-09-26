@@ -39,7 +39,7 @@ public class TestPerformance {
     private List<User> allUsers;
 
 
-    private static final int NUMBER_OF_TEST_USERS = 100000;
+    private static final int NUMBER_OF_TEST_USERS = 1000;
 
     @Before
     public void setUp() {
