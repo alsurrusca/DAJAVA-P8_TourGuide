@@ -25,7 +25,7 @@ public class TourGuideService {
 
     public UserService userService;
 
-    public UserRewardService userRewardService;
+    public UserRewardService userRewardService = new UserRewardService();
 
     private final Logger logger = LoggerFactory.getLogger(TourGuideService.class);
 

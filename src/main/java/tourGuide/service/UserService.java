@@ -27,6 +27,9 @@ public class UserService {
     @Autowired
     private RewardsService rewardsService;
 
+
+
+
     private final ExecutorService executorService = Executors.newFixedThreadPool(100);
 
     private final Logger logger = LoggerFactory.getLogger(TourGuideService.class);
@@ -75,16 +78,22 @@ public class UserService {
         ExecutorService executorService = Executors.newCachedThreadPool();
 
         CompletableFuture<VisitedLocation> result = CompletableFuture.supplyAsync(() -> {
+
             VisitedLocation visitedLocation = gpsUtil.getUserLocation(user.getUserId());
+
             user.addToVisitedLocations(visitedLocation);
             rewardsService.calculateRewards(user);
             return visitedLocation;
-        }, executorService);
+        }
+            , executorService);
+
+
         executorService.shutdownNow();
         return result;
     }
 
-    public VisitedLocation getUserLocation(User user) throws ExecutionException, InterruptedException {
+
+    public VisitedLocation getUserLocation(User user) throws InterruptedException, ExecutionException {
         CompletableFuture<VisitedLocation> resultFuture = trackUserLocation(user);
 
         VisitedLocation result = resultFuture.get();

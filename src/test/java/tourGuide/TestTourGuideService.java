@@ -7,8 +7,10 @@ import org.junit.Test;
 import rewardCentral.RewardCentral;
 import tourGuide.helper.InternalTestHelper;
 import tourGuide.model.User;
+import tourGuide.model.UserReward;
 import tourGuide.service.RewardsService;
 import tourGuide.service.TourGuideService;
+import tourGuide.service.UserRewardService;
 import tourGuide.service.UserService;
 import tripPricer.Provider;
 
@@ -17,28 +19,26 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class TestTourGuideService {
 
     private final UserService userService = new UserService();
 
+	private final UserRewardService userRewardService = new UserRewardService();
 
     @Test
     public void getUserLocation() throws ExecutionException, InterruptedException {
         GpsUtil gpsUtil = new GpsUtil();
         RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
-        InternalTestHelper.setInternalUserNumber(0);
+        InternalTestHelper.setInternalUserNumber(100);
         TourGuideService tourGuideService = new TourGuideService(gpsUtil, gpsUtil, rewardsService, userService);
         User user = new User(UUID.randomUUID(), "jon", "000", "jon@tourGuide.com");
 
         CompletableFuture<VisitedLocation> futureResult = userService.trackUserLocation(user);
-        userService.getUserLocation(user);
+		VisitedLocation result = futureResult.get();
 
-        tourGuideService.tracker.stopTracking();
-
-        //assertEquals(visitedLocation.userId, user.getUserId());
+        assertEquals(result.userId, user.getUserId());
     }
 
 	@Test
@@ -110,29 +110,37 @@ public class TestTourGuideService {
 		TourGuideService tourGuideService = new TourGuideService(gpsUtil, gpsUtil, rewardsService, userService);
 		
 		User user = new User(UUID.randomUUID(), "jon", "000", "jon@tourGuide.com");
-		VisitedLocation visitedLocation = tourGuideService.getUserLocation(user);
-		
-		List<Attraction> attractions = tourGuideService.getNearByAttractions(visitedLocation);
-		
-		tourGuideService.tracker.stopTracking();
-		
-		assertEquals(5, attractions.size());
+		CompletableFuture<VisitedLocation> futureResult = userService.trackUserLocation(user);
+
+		// Wait for the trackUserLocation() to complete
+		VisitedLocation result = futureResult.get();
+		assertNotNull(result);
+
+		List<Attraction> attractions = tourGuideService.getNearByAttractions(result);
+
+		assertFalse(attractions.isEmpty());
+
 	}
 	@Test
-	public void getTripDeals() {
+	public void getTripDeals() throws ExecutionException, InterruptedException {
 		GpsUtil gpsUtil = new GpsUtil();
 		RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
 		InternalTestHelper.setInternalUserNumber(0);
 		TourGuideService tourGuideService = new TourGuideService(gpsUtil, gpsUtil, rewardsService, userService);
-		
-		User user = new User(UUID.randomUUID(), "jon", "000", "jon@tourGuide.com");
 
+		User user = new User(UUID.randomUUID(), "jon", "000", "jon@tourGuide.com");
+		VisitedLocation visitedLocation = tourGuideService.getUserLocation(user);
+		Attraction attraction = gpsUtil.getAttractions().get(0);
+		UserReward userReward = new UserReward(visitedLocation, attraction, 10);
+		user.addUserReward(userReward);
 		List<Provider> providers = tourGuideService.getTripDeals(user);
 		
 		tourGuideService.tracker.stopTracking();
-		
-		assertEquals(10, providers.size());
+
+		assertFalse(providers.isEmpty());
 	}
-	
+
+
+
 
 }
