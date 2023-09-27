@@ -32,12 +32,12 @@ Download and [install Maven](https://maven.apache.org/install.html).
 3. Available end point 
  ```sh
 1. http://localhost:8080/ -> Home page
-2. http://localhost:8080/getLocation?userName=""
-3. http://localhost:8080/getNearbyAttractions?userName=""
-4. http://localhost:8080/getRewards?userName=""
-5. http://localhost:8080/getAllCurentLocation?userName=""
-6. http://localhost:8080/getTripDeals?userName=""
-7. http://localhost:8080/updateUser?userName=""
+2. http://localhost:8080/getLocation?username="" -> request user location
+3. http://localhost:8080/getNearbyAttractions?username="" -> request nearest attractions
+4. http://localhost:8080/getRewards?username="" -> request user Rewards 
+5. http://localhost:8080/getAllCurentLocation?username="" -> request all user's location
+6. http://localhost:8080/getTripDeals?username="" -> request trip deals
+7. http://localhost:8080/updateUserPreferences?username="" -> request to change user's preferences
 
 
 ```
