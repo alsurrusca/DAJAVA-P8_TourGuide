@@ -14,8 +14,8 @@ public class User {
 	private String phoneNumber;
 	private String emailAddress;
 	private Date latestLocationTimestamp;
-	private List<VisitedLocation> visitedLocations = new ArrayList<>();
-	private List<UserReward> userRewards = new ArrayList<>();
+	private final List<VisitedLocation> visitedLocations = new ArrayList<>();
+	private final List<UserReward> userRewards = new ArrayList<>();
 	private UserPreferences userPreferences = new UserPreferences();
 	private List<Provider> tripDeals = new ArrayList<>();
 	public User(UUID userId, String userName, String phoneNumber, String emailAddress) {
@@ -70,16 +70,24 @@ public class User {
 	}
 
 	public void addUserReward(UserReward userReward) {
-		//Add to reward list if user doesn't have this reward
-		if (userRewards.stream()
-				.noneMatch(reward->reward.attraction.attractionName.equals(userReward.attraction.attractionName))){
+		boolean found = false;
+		for (UserReward reward : userRewards) {
+			if (reward.attraction.attractionName.equals(userReward.attraction.attractionName)) {
+				found = true;
+			}
+		}
+		if (found) {
+			//Do not add duplicate
+		}
+		else {
+			//Add reward
 			userRewards.add(userReward);
 		}
 	}
+
 	public List<UserReward> getUserRewards() {
-		return userRewards;
+		return new ArrayList<UserReward>(userRewards);
 	}
-	
 	public UserPreferences getUserPreferences() {
 		return userPreferences;
 	}

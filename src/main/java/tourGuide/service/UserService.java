@@ -21,16 +21,11 @@ public class UserService {
     private final Logger log = LoggerFactory.getLogger(UserService.class);
     private final ConcurrentMap<String, User> usersByName;
     public InternalTest internalTest;
-    boolean testMode = true;
+
     @Autowired
     private GpsUtil gpsUtil;
     @Autowired
     private RewardsService rewardsService;
-
-
-
-
-    private final ExecutorService executorService = Executors.newFixedThreadPool(100);
 
     private final Logger logger = LoggerFactory.getLogger(TourGuideService.class);
 
@@ -40,31 +35,14 @@ public class UserService {
         this.gpsUtil = new GpsUtil();
         this.rewardsService = new RewardsService(gpsUtil,new RewardCentral());
 
-        if (testMode) {
-            logger.info("TestMode enabled");
-            logger.debug("Initializing users");
-            internalTest.initializeInternalUsers();
-            logger.debug("Finished initializing users");
-        }
-
     }
 
 
-    /**
-     * Return list of all user stored
-     *
-     * @return list of all users
-     */
     public List<User> getAllUser() {
         log.info("get All user ok");
         return new ArrayList<>(usersByName.values());
     }
 
-    /**
-     * Add user to the collection
-     *
-     * @param user - User object to be added
-     */
     public void addUser(User user) {
         usersByName.put(user.getUsername(), user);
         log.info("Add user ok");
@@ -107,10 +85,29 @@ public class UserService {
 
 
 
-    public void trackListUserLocation(List<User> userList) {
-        for (User user : userList) {
-            Runnable runnable = () -> trackUserLocation(user);
-            executorService.execute(runnable);
+
+
+    /**
+     * Add a VisitedLocation to a stored User
+     *
+     * @param visitedLocation VisitedLocation object to be added to user
+     * @param userName name of user
+     * @return boolean true if successful, false if user not found
+     */
+    public boolean addToVisitedLocations(VisitedLocation visitedLocation, String userName) {
+        User user = usersByName.get(userName);
+        if (user != null) {
+            user.addToVisitedLocations(visitedLocation);
+            return true;
         }
+        logger.debug("addToVisitedLocations: user not found with name " + userName + " returning false");
+        return false;
     }
+
+    public int getUserCount() {
+        return usersByName.size();
+    }
+
+
+
 }

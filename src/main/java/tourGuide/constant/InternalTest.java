@@ -11,6 +11,7 @@ import tourGuide.model.User;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
+import java.util.stream.IntStream;
 
 import static java.util.stream.IntStream.range;
 
@@ -28,30 +29,21 @@ public class InternalTest {
 
 
     public void initializeInternalUsers() {
-        range(0, InternalTestHelper.getInternalUserNumber()).forEach(i -> {
+        IntStream.range(0, InternalTestHelper.getInternalUserNumber()).forEach(i -> {
             String userName = "internalUser" + i;
             String phone = "000";
             String email = userName + "@tourGuide.com";
             User user = new User(UUID.randomUUID(), userName, phone, email);
             generateUserLocationHistory(user);
 
-            addUser(user);
             internalUserMap.put(userName, user);
         });
         log.debug("Created " + InternalTestHelper.getInternalUserNumber() + " internal test users.");
+
     }
 
-    /**
-     * Add a user to the InternalUserMap if it does not contain already the userName
-     * @param user - User
-     */
-    public void addUser(User user) {
-        if (!internalUserMap.containsKey(user.getUsername())) {
-            internalUserMap.put(user.getUsername(), user);
-        } else {
-            log.error(user.getUsername() + " already exist ! ");
-        }
-    }
+
+
 
     /**
      * Generate a user location history of 3 visited locations for the current user

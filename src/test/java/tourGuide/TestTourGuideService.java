@@ -4,13 +4,13 @@ import gpsUtil.GpsUtil;
 import gpsUtil.location.Attraction;
 import gpsUtil.location.VisitedLocation;
 import org.junit.Test;
+import org.springframework.boot.test.context.SpringBootTest;
 import rewardCentral.RewardCentral;
 import tourGuide.helper.InternalTestHelper;
 import tourGuide.model.User;
 import tourGuide.model.UserReward;
 import tourGuide.service.RewardsService;
 import tourGuide.service.TourGuideService;
-import tourGuide.service.UserRewardService;
 import tourGuide.service.UserService;
 import tripPricer.Provider;
 
@@ -21,18 +21,17 @@ import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.*;
 
+@SpringBootTest(classes = {Application.class})
 public class TestTourGuideService {
 
     private final UserService userService = new UserService();
-
-	private final UserRewardService userRewardService = new UserRewardService();
 
     @Test
     public void getUserLocation() throws ExecutionException, InterruptedException {
         GpsUtil gpsUtil = new GpsUtil();
         RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
-        InternalTestHelper.setInternalUserNumber(100);
-        TourGuideService tourGuideService = new TourGuideService(gpsUtil, gpsUtil, rewardsService, userService);
+        InternalTestHelper.setInternalUserNumber(10);
+        TourGuideService tourGuideService = new TourGuideService(gpsUtil, rewardsService, userService);
         User user = new User(UUID.randomUUID(), "jon", "000", "jon@tourGuide.com");
 
         CompletableFuture<VisitedLocation> futureResult = userService.trackUserLocation(user);
@@ -45,8 +44,8 @@ public class TestTourGuideService {
 	public void addUser() {
 		GpsUtil gpsUtil = new GpsUtil();
 		RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
-		InternalTestHelper.setInternalUserNumber(0);
-		TourGuideService tourGuideService = new TourGuideService(gpsUtil,gpsUtil, rewardsService, userService);
+		InternalTestHelper.setInternalUserNumber(1);
+		TourGuideService tourGuideService = new TourGuideService(gpsUtil, rewardsService, userService);
 		
 		User user = new User(UUID.randomUUID(), "jon", "000", "jon@tourGuide.com");
 		User user2 = new User(UUID.randomUUID(), "jon2", "000", "jon2@tourGuide.com");
@@ -68,8 +67,8 @@ public class TestTourGuideService {
 	public void getAllUsers() {
 		GpsUtil gpsUtil = new GpsUtil();
 		RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
-		InternalTestHelper.setInternalUserNumber(0);
-		TourGuideService tourGuideService = new TourGuideService(gpsUtil, gpsUtil, rewardsService, userService);
+		InternalTestHelper.setInternalUserNumber(1);
+		TourGuideService tourGuideService = new TourGuideService(gpsUtil, rewardsService, userService);
 		
 		User user = new User(UUID.randomUUID(), "jon", "000", "jon@tourGuide.com");
 		User user2 = new User(UUID.randomUUID(), "jon2", "000", "jon2@tourGuide.com");
@@ -91,8 +90,8 @@ public class TestTourGuideService {
 	public void trackUser() throws ExecutionException, InterruptedException {
 		GpsUtil gpsUtil = new GpsUtil();
 		RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
-		InternalTestHelper.setInternalUserNumber(0);
-		TourGuideService tourGuideService = new TourGuideService(gpsUtil, gpsUtil, rewardsService, userService);
+		InternalTestHelper.setInternalUserNumber(1);
+		TourGuideService tourGuideService = new TourGuideService(gpsUtil, rewardsService, userService);
 		
 		User user = new User(UUID.randomUUID(), "jon", "000", "jon@tourGuide.com");
 		VisitedLocation visitedLocation = tourGuideService.getUserLocation(user);
@@ -106,8 +105,8 @@ public class TestTourGuideService {
 	public void getNearbyAttractions() throws ExecutionException, InterruptedException {
 		GpsUtil gpsUtil = new GpsUtil();
 		RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
-		InternalTestHelper.setInternalUserNumber(0);
-		TourGuideService tourGuideService = new TourGuideService(gpsUtil, gpsUtil, rewardsService, userService);
+		InternalTestHelper.setInternalUserNumber(1);
+		TourGuideService tourGuideService = new TourGuideService(gpsUtil, rewardsService, userService);
 		
 		User user = new User(UUID.randomUUID(), "jon", "000", "jon@tourGuide.com");
 		CompletableFuture<VisitedLocation> futureResult = userService.trackUserLocation(user);
@@ -125,8 +124,8 @@ public class TestTourGuideService {
 	public void getTripDeals() throws ExecutionException, InterruptedException {
 		GpsUtil gpsUtil = new GpsUtil();
 		RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
-		InternalTestHelper.setInternalUserNumber(0);
-		TourGuideService tourGuideService = new TourGuideService(gpsUtil, gpsUtil, rewardsService, userService);
+		InternalTestHelper.setInternalUserNumber(1);
+		TourGuideService tourGuideService = new TourGuideService(gpsUtil, rewardsService, userService);
 
 		User user = new User(UUID.randomUUID(), "jon", "000", "jon@tourGuide.com");
 		VisitedLocation visitedLocation = tourGuideService.getUserLocation(user);

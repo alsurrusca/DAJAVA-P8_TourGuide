@@ -44,26 +44,27 @@ public class TourGuideController {
 
     /**
      * Get user location with username
+     *
      * @param username - Username of user
      * @return a Json String of a user location
-     *
      */
     @RequestMapping("/getLocation")
-    public String getLocation(@RequestParam String username){
-       try{
-           VisitedLocation visitedLocation = tourGuideService.getUserLocation(getUser(username));
-           return JsonStream.serialize(visitedLocation.location);
-       } catch (ExecutionException | InterruptedException e) {
-           return ("TourGuide Controller : Error with completable Future : " + e);
-       } catch (UsernameNotFoundException e){
-           return "Username not found  : " + e.getMessage();
-       }
+    public String getLocation(@RequestParam String username) {
+        try {
+            VisitedLocation visitedLocation = tourGuideService.getUserLocation(getUser(username));
+            return JsonStream.serialize(visitedLocation.location);
+        } catch (ExecutionException | InterruptedException e) {
+            return ("TourGuide Controller : Error with completable Future : " + e);
+        } catch (UsernameNotFoundException e) {
+            return "Username not found  : " + e.getMessage();
+        }
     }
 
     /**
      * Get Nearby attraction
+     *
      * @param username - Username of user
-     * @return Json Stream
+     * @return Json String of user's closest attractions
      */
     @RequestMapping("/getNearbyAttractions")
     public String getNearbyAttractions(@RequestParam String username) {
@@ -83,7 +84,12 @@ public class TourGuideController {
         }
     }
 
-
+    /**
+     * Get Rewards by username
+     *
+     * @param username
+     * @return JsonStream - List of userRewards
+     */
     @RequestMapping("/getRewards")
     public String getRewards(@RequestParam String username) {
         try {
@@ -98,15 +104,26 @@ public class TourGuideController {
         }
     }
 
+    /**
+     * Get all current location
+     *
+     * @return Json List with current location
+     */
     @RequestMapping("/getAllCurrentLocations")
     public String getAllCurrentLocations() {
-            try {
-                return JsonStream.serialize(tourGuideService.getAllCurrentLocations());
-            } catch (ExecutionException | InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+        try {
+            return JsonStream.serialize(tourGuideService.getAllCurrentLocations());
+        } catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
+    /**
+     * Get all trip deal
+     *
+     * @param username
+     * @return Json list of trip deals for user
+     */
     @RequestMapping("/getTripDeals")
     public String getTripDeals(@RequestParam String username) {
         try {
@@ -126,17 +143,16 @@ public class TourGuideController {
     }
 
 
-
-
     /**
      * Update user's preferences
-     * @param username - Username of user
+     *
+     * @param username           - Username of user
      * @param userPreferencesDTO - DTO of user's preferences
      * @return responseEntity
      */
     @PutMapping("/updateUserPreferences}")
     public ResponseEntity<UserPreferences> updateUserPreferences
-            (@RequestParam String username, @RequestBody UserPreferencesDTO userPreferencesDTO) {
+    (@RequestParam String username, @RequestBody UserPreferencesDTO userPreferencesDTO) {
         UserPreferences userPreferences = userPreferencesService.updateUserPreferences(username, userPreferencesDTO);
         return ResponseEntity.ok(userPreferences);
 
