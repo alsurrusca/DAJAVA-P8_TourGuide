@@ -26,7 +26,6 @@ public class TestPerformance {
 
     @Autowired
     private GpsUtil gpsUtil = new GpsUtil();
-    StopWatch stopWatch = new StopWatch();
 
 
 
@@ -50,7 +49,7 @@ public class TestPerformance {
      *          assertTrue(TimeUnit.MINUTES.toSeconds(20) >= TimeUnit.MILLISECONDS.toSeconds(stopWatch.getTime()));
      */
 
-    private static final int NUMBER_OF_TEST_USERS = 10;
+    private static final int NUMBER_OF_TEST_USERS = 1000;
 
     @Test
     public void highVolumeTrackLocation() {

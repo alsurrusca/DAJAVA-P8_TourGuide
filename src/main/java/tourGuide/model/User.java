@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public class User {
 	private final UUID userId;
-	private final String userName;
+	private String userName;
 	private String phoneNumber;
 	private String emailAddress;
 	private Date latestLocationTimestamp;
@@ -32,6 +32,8 @@ public class User {
 	public String getUsername() {
 		return userName;
 	}
+
+	public void setUserName(String userName){this.userName = userName;}
 	
 	public void setPhoneNumber(String phoneNumber) {
 		this.phoneNumber = phoneNumber;
@@ -62,7 +64,7 @@ public class User {
 	}
 	
 	public List<VisitedLocation> getVisitedLocations() {
-		return visitedLocations;
+		return new ArrayList<>(visitedLocations);
 	}
 	
 	public void clearVisitedLocations() {
@@ -86,7 +88,7 @@ public class User {
 	}
 
 	public List<UserReward> getUserRewards() {
-		return new ArrayList<UserReward>(userRewards);
+		return new ArrayList<>(userRewards);
 	}
 	public UserPreferences getUserPreferences() {
 		return userPreferences;
@@ -107,5 +109,6 @@ public class User {
 	public List<Provider> getTripDeals() {
 		return tripDeals;
 	}
+
 
 }

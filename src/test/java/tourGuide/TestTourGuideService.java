@@ -4,6 +4,7 @@ import gpsUtil.GpsUtil;
 import gpsUtil.location.Attraction;
 import gpsUtil.location.VisitedLocation;
 import org.junit.Test;
+import org.mockito.InjectMocks;
 import org.springframework.boot.test.context.SpringBootTest;
 import rewardCentral.RewardCentral;
 import tourGuide.helper.InternalTestHelper;
@@ -11,6 +12,7 @@ import tourGuide.model.User;
 import tourGuide.model.UserReward;
 import tourGuide.service.RewardsService;
 import tourGuide.service.TourGuideService;
+import tourGuide.service.UserPreferencesService;
 import tourGuide.service.UserService;
 import tripPricer.Provider;
 
@@ -25,6 +27,9 @@ import static org.junit.Assert.*;
 public class TestTourGuideService {
 
     private final UserService userService = new UserService();
+
+	@InjectMocks
+	private UserPreferencesService userPreferencesService;
 
     @Test
     public void getUserLocation() throws ExecutionException, InterruptedException {
@@ -140,6 +145,5 @@ public class TestTourGuideService {
 	}
 
 
+	}
 
-
-}

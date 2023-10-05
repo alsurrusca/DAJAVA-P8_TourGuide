@@ -143,10 +143,8 @@ public class TourGuideService {
         futures.forEach((n)-> {
             try {
                 n.get();
-            } catch (InterruptedException e) {
-                logger.error("Track All Users InterruptedException: " + e);
-            } catch (ExecutionException e) {
-                logger.error("Track All Users ExecutionException: " + e);
+            } catch (InterruptedException | ExecutionException e) {
+                logger.error(String.valueOf(e));
             }
         });
         logger.debug("trackAllUserLocations: Done!");
@@ -176,11 +174,8 @@ public class TourGuideService {
         futures.forEach((n)-> {
             try {
                 n.get();
-            } catch (InterruptedException e) {
-                logger.error("Track All Users And Process InterruptedException: " + e);
-            } catch (ExecutionException e) {
-                logger.error("Track 1 All Users And Process ExecutionException: " + e);
-
+            } catch (InterruptedException | ExecutionException e) {
+                logger.error(String.valueOf(e));
             }
         });
         logger.debug("Done!");
